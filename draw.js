@@ -1,10 +1,8 @@
 //Starts the animation cycle
 function init() {
-    let car = new Car(100, 100);
-    let track = new Track();
-    track.load(defaultTrackCode);
-    let canvasHeight, canvasWidth;
-    let totalLaps = 0;
+    car = new Car(carStartPos.x, carStartPos.y)
+    track = new Track();
+    track.load(defaultTrackCode, car);
     window.requestAnimationFrame(draw);
 }
 
@@ -32,18 +30,19 @@ function draw(now) {
     //Operates the track
     track.createTrack(ctx);
     track.drawTrack(ctx);
-    track.carCrashed(ctx);
     track.drawStartLine(ctx);
     track.drawCheckpoints(ctx);
-    track.hittingStartLine();
-    if (track.checkpoints.length > 1) {
-        track.hittingCheckpoint();
-    }
 
     //Operates the car
     if (!settingCarPos) {
+        car.carCrashed(track);
         car.calcVel();
         car.drawDriftTracks(ctx);
+        car.hittingStartLine(track);
+        if (track.checkpoints.length > 1) {
+            car.hittingCheckpoint(track);
+        }
+    
         if (rightPressed) {
             car.turn(6);
         } else if (leftPressed) {
@@ -56,7 +55,8 @@ function draw(now) {
             car.boostVel(-10);
         }
         //car.wrap(canvas);
-        car.getSurroundings(ctx);
+        car.getSurroundings(ctx, track);
+
     } else {
         car.setStartPos();
     }

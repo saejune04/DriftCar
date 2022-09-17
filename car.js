@@ -1,5 +1,4 @@
 function Car(x, y) {
-    this.startPos = new Point(100, 100);
     this.alive = true;
     this.x = x;
     this.y = y;
@@ -14,6 +13,7 @@ function Car(x, y) {
     this.driftTracksY = [[], [], [], []];
     let rad = this.dir * Math.PI / 180;
 
+    this.showFeelers = false;
     //AI stuff here
     //this.brain = new NeuralNetwork(10, 16, 4);
     this.score = 0;
@@ -68,8 +68,8 @@ function Car(x, y) {
     };
 
     this.died = function() {
-        this.x = this.startPos.x;
-        this.y = this.startPos.y;
+        this.x = carStartPos.x;
+        this.y = carStartPos.y;
         this.driftTracksX = [[], [], [], []];
         this.driftTracksY = [[], [], [], []];
         this.dir = 0;
@@ -85,8 +85,8 @@ function Car(x, y) {
         window.onmousedown = () => {  
             if (mouseX > 0 && mouseX < canvasWidth && mouseY > 0 && mouseY < canvasHeight) {
                 if (settingCarPos) {
-                    this.startPos.x = mouseX - canvasWidth / 2;
-                    this.startPos.y = mouseY - canvasHeight / 2;
+                    carStartPos.x = mouseX - canvasWidth / 2;
+                    carStartPos.y = mouseY - canvasHeight / 2;
                     settingCarPos = false;
                     this.died();
                 }
@@ -134,9 +134,7 @@ function Car(x, y) {
         if (Math.abs(this.vel[1]) < 0.01) {
             this.vel[1] = 0;
         }
-        //console.log(this.getVel());
-        //console.log(this.vel);
-        
+
         //Decelerates
         if (this.friction !== 0) {
             this.vel[0] /= this.friction ** (60 / fps);
@@ -181,7 +179,6 @@ function Car(x, y) {
         //increases speed in direction of drift
         //this.vel[0] += this.totalVel * Math.cos(rad + (45 * deg > 0 ? 1: -1));
         //this.vel[1] += this.totalVel * Math.sin(rad + (45 * deg > 0 ? 1: -1));
-        //console.log(this.totalVel);
     };
 
     //Wraps the car around the canvas
@@ -199,102 +196,104 @@ function Car(x, y) {
             this.y = -1 * canvas.height / 2;
         }
     };
-/*
-                for (let j = 0; j < this.xVals[i].length - 1; j++) {
-                    let p2 = new Point(this.xVals[i][j], this.yVals[i][j])
-                    q2 = new Point(this.xVals[i][j + 1], this.yVals[i][j + 1]);
-                    if (doIntersect(new Point((car.width / 2 * Math.cos(rad) - car.height / 2 * Math.sin(rad)) + car.x, (car.width / 2 * Math.sin(rad) + car.height / 2 * Math.cos(rad)) + car.y), 
-                    new Point((car.width / 2 * Math.cos(rad) + car.height / 2 * Math.sin(rad)) + car.x, (car.width / 2 * Math.sin(rad) - car.height / 2 * Math.cos(rad)) + car.y), p2, q2) || 
-                    
-                    doIntersect(new Point((car.width / 2 * Math.cos(rad) + car.height / 2 * Math.sin(rad)) + car.x, (car.width / 2 * Math.sin(rad) - car.height / 2 * Math.cos(rad)) + car.y), 
-                    new Point((-1 * car.width / 2 * Math.cos(rad) + car.height / 2 * Math.sin(rad)) + car.x, (-1 * car.width / 2 * Math.sin(rad) - car.height / 2 * Math.cos(rad)) + car.y), p2, q2) || 
-    
-                    doIntersect(new Point((-1 * car.width / 2 * Math.cos(rad) + car.height / 2 * Math.sin(rad)) + car.x, (-1 * car.width / 2 * Math.sin(rad) - car.height / 2 * Math.cos(rad)) + car.y), 
-                    new Point((-1 * car.width / 2 * Math.cos(rad) - car.height / 2 * Math.sin(rad)) + car.x, (-1 * car.width / 2 * Math.sin(rad) + car.height / 2 * Math.cos(rad)) + car.y), p2, q2) || 
-    
-                    doIntersect(new Point((-1 * car.width / 2 * Math.cos(rad) - car.height / 2 * Math.sin(rad)) + car.x, (-1 * car.width / 2 * Math.sin(rad) + car.height / 2 * Math.cos(rad)) + car.y), 
-                    new Point((car.width / 2 * Math.cos(rad) - car.height / 2 * Math.sin(rad)) + car.x, (car.width / 2 * Math.sin(rad) + car.height / 2 * Math.cos(rad)) + car.y), p2, q2)) {
-                        car.alive = false;
-                        //console.log("collided");
-                        return;
-                    }
-                }
-*/
-    //will store all points from surrounding feelers thingies
+
+    //Array will store all points from surrounding feelers thingies
     this.surroundings = [new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0)];
-    this.getSurroundings = function(ctx) {
+    this.getSurroundings = function(ctx, track) {
         //labeled 0-9 starting from top moving right
-        //feeler lines are length 500
+        //feeler lines are length 500 atm
 
         ctx.beginPath();
         let p1 = new Point((0 * this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (0 * this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y); //Is top middle of car
         let q1 = new Point(p1.x + 500 * Math.cos(-1.5708 + car.getRad()), p1.y + 500 * Math.sin(-1.5708 + car.getRad()))
-        this.surroundings[0] = this.calcSurroundIntersect(p1, q1);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(q1.x, q1.y);
+        this.surroundings[0] = this.calcSurroundIntersect(p1, q1, track);
+        if (this.showFeelers) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(q1.x, q1.y);
+        }
 
         q1 = new Point(p1.x + 500 * Math.cos(-1.0472 + car.getRad()), p1.y + 500 * Math.sin(-1.0472 + car.getRad()));
-        this.surroundings[1] = this.calcSurroundIntersect(p1, q1);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(q1.x, q1.y);
+        this.surroundings[1] = this.calcSurroundIntersect(p1, q1, track);
+        if (this.showFeelers) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(q1.x, q1.y);
+        }
 
         q1 = new Point(p1.x + 500 * Math.cos(-0.5236 + car.getRad()), p1.y + 500 * Math.sin(-0.5236 + car.getRad()));
-        this.surroundings[2] = this.calcSurroundIntersect(p1, q1);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(q1.x, q1.y);
+        this.surroundings[2] = this.calcSurroundIntersect(p1, q1, track);
+        if (this.showFeelers) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(q1.x, q1.y);
+        }
 
         q1 = new Point(p1.x + 500 * Math.cos(car.getRad()), p1.y + 500 * Math.sin(car.getRad()));
-        this.surroundings[3] = this.calcSurroundIntersect(p1, q1);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(q1.x, q1.y);
+        this.surroundings[3] = this.calcSurroundIntersect(p1, q1, track);
+        if (this.showFeelers) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(q1.x, q1.y);
+        }
 
         p1 = new Point((0 * this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (0 * this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y); //Is bottom middle of car
         q1 = new Point(p1.x + 500 * Math.cos(0.7854 + car.getRad()), p1.y + 500 * Math.sin(0.7854 + car.getRad()));
-        this.surroundings[4] = this.calcSurroundIntersect(p1, q1);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(q1.x, q1.y);
+        this.surroundings[4] = this.calcSurroundIntersect(p1, q1, track);
+        if (this.showFeelers) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(q1.x, q1.y);
+        }
 
         q1 = new Point(p1.x + 500 * Math.cos(1.5708 + car.getRad()), p1.y + 500 * Math.sin(1.5708 + car.getRad()))
-        this.surroundings[5] = this.calcSurroundIntersect(p1, q1);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(q1.x, q1.y);
+        this.surroundings[5] = this.calcSurroundIntersect(p1, q1, track);
+        if (this.showFeelers) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(q1.x, q1.y);
+        }
 
         q1 = new Point(p1.x + 500 * Math.cos(2.3562 + car.getRad()), p1.y + 500 * Math.sin(2.3562 + car.getRad()));
-        this.surroundings[6] = this.calcSurroundIntersect(p1, q1);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(q1.x, q1.y);
+        this.surroundings[6] = this.calcSurroundIntersect(p1, q1, track);
+        if (this.showFeelers) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(q1.x, q1.y);
+        }
 
         p1 = new Point((0 * this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (0 * this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y); //Is top middle of car
         q1 = new Point(p1.x + 500 * Math.cos(3.1415 + car.getRad()), p1.y + 500 * Math.sin(3.1415 + car.getRad()));
-        this.surroundings[7] = this.calcSurroundIntersect(p1, q1);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(q1.x, q1.y);
+        this.surroundings[7] = this.calcSurroundIntersect(p1, q1, track);
+        if (this.showFeelers) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(q1.x, q1.y);
+        }
 
         q1 = new Point(p1.x + 500 * Math.cos(3.6652 + car.getRad()), p1.y + 500 * Math.sin(3.6652 + car.getRad()));
-        this.surroundings[8] = this.calcSurroundIntersect(p1, q1);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(q1.x, q1.y);
+        this.surroundings[8] = this.calcSurroundIntersect(p1, q1, track);
+        if (this.showFeelers) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(q1.x, q1.y);
+        }
 
         q1 = new Point(p1.x + 500 * Math.cos(4.1888 + car.getRad()), p1.y + 500 * Math.sin(4.1888 + car.getRad()));
-        this.surroundings[9] = this.calcSurroundIntersect(p1, q1);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(q1.x, q1.y);
+        this.surroundings[9] = this.calcSurroundIntersect(p1, q1, track);
+        if (this.showFeelers) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(q1.x, q1.y);
+        }
+
         ctx.stroke();
         ctx.closePath();
 
-        //console.log(this.surroundings);
-        for (let i = 0; i < this.surroundings.length; i++) { // NEEDS TO HANDLES NULL VALUES, cant just default to 0,0
-            ctx.beginPath();
-
-            ctx.fillStyle = "#000000";
-            ctx.arc(this.surroundings[i].x, this.surroundings[i].y, 4, 0, Math.PI * 2); 
-            ctx.fill();
-            ctx.closePath();
+        if (this.showFeelers) {
+            for (let i = 0; i < this.surroundings.length; i++) { // NEEDS TO HANDLES NULL VALUES, cant just default to 0,0
+                ctx.beginPath();
+    
+                ctx.fillStyle = "#000000";
+                ctx.arc(this.surroundings[i].x, this.surroundings[i].y, 4, 0, Math.PI * 2); 
+                ctx.fill();
+                ctx.closePath();
+            }
         }
     };
 
     //helper function for getSurroundings
-    this.calcSurroundIntersect = function(p1, q1) {
+    this.calcSurroundIntersect = function(p1, q1, track) {
         let intersects = [];
         for (let i = 0; i < track.xVals.length; i++) {
             for (let j = 0; j < track.xVals[i].length - 1; j++) {
@@ -323,5 +322,84 @@ function Car(x, y) {
 
     this.getRad = function() {
         return rad;
+    };
+
+    //Checks if car is in contact with any of the track lines
+    this.carCrashed = function(track) {
+        if (this.alive) {
+            let rad = this.getRad();
+            for (let i = 0; i < track.xVals.length; i++) {
+                for (let j = 0; j < track.xVals[i].length - 1; j++) {
+                    let p2 = new Point(track.xVals[i][j], track.yVals[i][j])
+                    q2 = new Point(track.xVals[i][j + 1], track.yVals[i][j + 1]);
+
+                    /*let q2;
+                    if (j < track.xVals[i].length - 1) {
+                        q2 = new Point(track.xVals[i][j + 1], track.yVals[i][j + 1]);
+                    } else {
+                        q2 = new Point(track.xVals[i][0], track.yVals[i][0])
+                    }*/
+                    if (doIntersect(new Point((this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), 
+                    new Point((this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), p2, q2) || 
+                    
+                    doIntersect(new Point((this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), 
+                    new Point((-1 * this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), p2, q2) || 
+    
+                    doIntersect(new Point((-1 * this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), 
+                    new Point((-1 * this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), p2, q2) || 
+    
+                    doIntersect(new Point((-1 * this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), 
+                    new Point((this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), p2, q2)) {
+                        this.alive = false;
+                        return;
+                    }
+                }
+            }
+        } else {
+            this.alive = true;
+            return;
+        }
+    };
+
+    //Detects starting line collision
+    this.hittingStartLine = function(track) {
+        if (this.currCheckpoint >= track.checkpoints.length / 2) {
+            let rad = this.getRad();
+            if (doIntersect(new Point((this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), 
+            new Point((this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), track.startLine[0], track.startLine[1]) || 
+            
+            doIntersect(new Point((this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), 
+            new Point((-1 * this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), track.startLine[0], track.startLine[1]) || 
+    
+            doIntersect(new Point((-1 * this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), 
+            new Point((-1 * this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), track.startLine[0], track.startLine[1]) || 
+    
+            doIntersect(new Point((-1 * this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), 
+            new Point((this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), track.startLine[0], track.startLine[1])) {
+                totalLaps++;
+                this.currCheckpoint = 0;
+            }
+        }
+    }
+
+    //Detects checkpoint collision
+    this.hittingCheckpoint = function(track) {
+        let rad = this.getRad();
+        //only checks for collision on the next checkpoint in order for processing optimization
+        if (this.currCheckpoint < track.checkpoints.length / 2) {
+            if (doIntersect(new Point((this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), 
+            new Point((this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), track.checkpoints[2 * this.currCheckpoint], track.checkpoints[2 * this.currCheckpoint + 1]) || 
+            
+            doIntersect(new Point((this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), 
+            new Point((-1 * this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), track.checkpoints[2 * this.currCheckpoint], track.checkpoints[2 * this.currCheckpoint + 1]) || 
+    
+            doIntersect(new Point((-1 * this.width / 2 * Math.cos(rad) + this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) - this.height / 2 * Math.cos(rad)) + this.y), 
+            new Point((-1 * this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), track.checkpoints[2 * this.currCheckpoint], track.checkpoints[2 * this.currCheckpoint + 1]) || 
+    
+            doIntersect(new Point((-1 * this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (-1 * this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), 
+            new Point((this.width / 2 * Math.cos(rad) - this.height / 2 * Math.sin(rad)) + this.x, (this.width / 2 * Math.sin(rad) + this.height / 2 * Math.cos(rad)) + this.y), track.checkpoints[2 * this.currCheckpoint], track.checkpoints[2 * this.currCheckpoint + 1])) {
+                this.currCheckpoint++;
+            }
+        }
     };
 }

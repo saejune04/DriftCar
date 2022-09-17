@@ -2,8 +2,20 @@
 let times = [];
 let fps = 60;
 
+//Other global variables
+let carStartPos = new Point(0, 0);
+let car;
+let track;
+let canvasHeight, canvasWidth;
+let totalLaps = 0;
+
 /*
 To-do:
+
+***********
+Change the car death function to affect all cars, change the load to set the starting xy car pos as a public var or smth so u dont have to pass car as a param
+    -basically add a reset function where all the cars reset pos (after load, after startline make, after checkpoint make)
+car start pos stop when creating checkpoint or startingline
 
 (done, kinda) doriftooooo
 make drift physics better
@@ -111,15 +123,12 @@ function lineLineIntersection(A,B,C,D){
     
     let determinant = a1*b2 - a2*b1;
     
-    if (determinant == 0)
-    {
+    if (determinant == 0) {
         // The lines are parallel. This is simplified
         // by returning a pair of FLT_MAX
         return new Point(Number.MAX_VALUE, Number.MAX_VALUE);
     }
-    else
-    {
-        console.log("returning: " + new Point((b2*c1 - b1*c2)/determinant, (a1*c2 - a2*c1)/determinant));
+    else {
         return new Point((b2*c1 - b1*c2)/determinant, (a1*c2 - a2*c1)/determinant);
     }
 }
@@ -226,85 +235,7 @@ function keyUpHandler(e) {
     }
 }
 
-//Handles draw track button
-let dtoutput = document.getElementById('drawTrackValue');
-dtoutput.innerHTML = "off";
-function changeDrawTrackState() {
-    if (track.isDrawingTrack) {
-        track.isDrawingTrack = false;
-        dtoutput.innerHTML = "off";
-    } else {
-        track.isDrawingTrack = true;
-        dtoutput.innerHTML = "on";
-    }
-}
 
-//Handles clear track button
-function clearTrack() {
-    track.clear();
-}
-
-//Handles save track button
-function saveTrack() {
-    track.save();
-}
-
-//Handles setting the car's starting position
-let settingCarPos = false;
-function setCarPos() {
-    car.died();
-    settingCarPos = true;
-}
-
-//Handles load track button
-function loadTrack() {
-    track.load(prompt("Enter your save code here"));
-}
-
-//Handles undo last drawn track button
-function undoTrack() {
-    track.undoLastStroke();
-}
-
-//Handles creation of start line
-function createStartLine() {
-    track.isMakingStartLine = 1;
-    track.createStartLine();
-}
-
-//Handles the create checkpoint button
-let ccOutput = document.getElementById("createCheckpointValue");
-ccOutput.innerHTML = "Create Checkpoints";
-function createCheckpoint() {
-    if (!track.isDrawingCheckpoints) {
-        track.isDrawingCheckpoints = true;
-        track.isMakingCheckpoint = 1;
-        ccOutput.innerHTML = "Finish Creating Checkpoints";
-        track.createCheckpoints();
-    } else {
-        track.isDrawingCheckpoints = false;
-        ccOutput.innerHTML = "Create Checkpoints";
-    }
-
-}
-
-//Handles the undo checkpoint button
-function undoCheckpoint() {
-    track.undoCheckpoint();
-}
-
-//Handles the show/hide checkpoints button
-let ccvoutput = document.getElementById("changeCheckpointVisibilityValue")
-ccvoutput.innerHTML = "Hide Checkpoints";
-function changeCheckpointVisibility() {
-    if (track.showCheckpoints) {
-        track.showCheckpoints = false;
-        ccvoutput.innerHTML = "Show Checkpoints";
-    } else {
-        track.showCheckpoints = true;
-        ccvoutput.innerHTML = "Hide Checkpoints";
-    }
-}
 
 let lapUpdater = document.getElementById("lapsTotal");
 function updateLapCounter() {
