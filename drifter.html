@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8"/>
+        <title>Drift</title>
+        <link rel = "stylesheet" href = "style.css">
+    </head>
+    <body>
+        <canvas id="drawingArea" width="1500" height="800"></canvas> 
+        <p>Laps done: <span id = "lapsTotal"></span></p>
+        <p>Current Generation: <span id = "currGen"></span></p>
+
+        <div class = "slidercontainer">
+            <p>Training Speed: <span id = "TrainingSpeedValue"></span></p>
+            <input type="range" min="1" max="10" value="1" class="slider" id="TrainingSpeedSlider">
+        </div>
+
+        <div class = "buttoncontainer">
+            <button class = "button" type = "button" id = "setCarPosButton" onclick = "setCarPos()">
+                <p>Set Car Starting Pos</p>
+            </button>
+            <button class = "button" type = "button" id = "drawTrackButton" onclick = "changeDrawTrackState()">
+                <p>Drawing Track: <span id = "drawTrackValue"></span></p>
+            </button>
+            <button class = "button" type = "button" id = "undoTrackButton" onclick = "undoTrack()">
+                <p>Undo Last Stroke <span id = "undoTrackValue"></span></p>
+            </button>
+            <button class = "button" type = "button" id = "clearTrackButton" onclick = "clearTrack()">
+                <p>Clear Track</p>
+            </button>
+            <button class = "button" type = "button" id = "saveTrackButton" onclick = "saveTrack()">
+                <p>Save Track</p>
+            </button>
+            <button class = "button" type = "button" id = "loadTrackButton" onclick = "loadTrack()">
+                <p>Load Track</p>
+            </button>
+            <button class = "button" type = "button" id = "createStartLineButton" onclick = "createStartLine()">
+                <p>Create Start Line</p>
+            </button>
+            <button class = "button" type = "button" id = "createCheckpointButton" onclick = "createCheckpoint()">
+                <p><span id = "createCheckpointValue"></span></p>
+            </button>
+            <button class = "button" type = "button" id = "undoCheckpointButton" onclick = "undoCheckpoint()">
+                <p>Undo Checkpoint</p>
+            </button>
+            <button class = "button" type = "button" id = "showCheckpointButton" onclick = "changeCheckpointVisibility()">
+                <p><span id = "changeCheckpointVisibilityValue"></span></p>
+            </button>
+        </div>
+
+        <div id="fps"></div>
+
+        <script type = "text/javascript" src="nn.js"?></script>
+        <script type = "text/javascript" src="defaultTrackCode.js"?></script>
+        <script type = "text/javascript" src="car.js"?></script>
+        <script type = "text/javascript" src="track.js"?></script>
+        <script type = "text/javascript" src="main.js"?></script>
+        <script type = "text/javascript" src="draw.js"?></script>
+        <script type = "text/javascript" src="buttonHandler.js"?></script>
+
+    </body>
+</html>
